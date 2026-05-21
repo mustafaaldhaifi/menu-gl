@@ -1,5 +1,3 @@
-import './bootstrap';
-
 // --- قاعدة بيانات المنتجات الوهمية (Mock Database) ---
 // المنتجات ليس لديها أسعار ثابتة بل خياراتها هي التي تحدد السعر
 const PRODUCTS_DATA = [
@@ -174,8 +172,7 @@ function initApp() {
     setupSearchAndFilters();
     updateCartUI();
     
-    // إخفاء الـ Loading إن وجد
-    console.log("Elite Menu initialized successfully!");
+    console.log("Elite Static Menu initialized successfully!");
 }
 
 // --- 1. إعداد وإدارة مظهر السمة (Light/Dark Mode) ---
@@ -327,7 +324,6 @@ function renderProducts() {
     // 2. النقر على البطاقة بالكامل لفتح المودال
     grid.querySelectorAll('.product-card').forEach(card => {
         card.addEventListener('click', (e) => {
-            // تجنب النقر المكرر لزر المفضلة وزر التخصيص
             if (e.target.closest('.fav-btn')) return;
             const id = parseInt(card.getAttribute('data-product-id'));
             openCustomizerModal(id);
@@ -362,7 +358,6 @@ function toggleFavorite(id, btnElement) {
     }
     localStorage.setItem('menu_favs', JSON.stringify(state.favorites));
     
-    // إذا كنا نعرض المفضلة حالياً، يجب إعادة التوليد فوراً لإزالة الصنف
     if (state.activeFilter === 'favs') {
         renderProducts();
     }
@@ -378,7 +373,6 @@ function setupSearchAndFilters() {
         });
     }
     
-    // فلاتر الميزات السريعة
     const filterTags = document.querySelectorAll('.quick-tags-wrapper .tag-badge');
     filterTags.forEach(tag => {
         tag.addEventListener('click', (e) => {
@@ -386,7 +380,6 @@ function setupSearchAndFilters() {
             const filterType = tag.getAttribute('data-filter');
             
             if (state.activeFilter === filterType) {
-                // إلغاء الفلتر
                 state.activeFilter = 'all';
             } else {
                 state.activeFilter = filterType;
@@ -413,7 +406,6 @@ function setupProductModal() {
         });
     }
     
-    // مستمعات الكمية داخل المودال
     const modalMinus = document.getElementById('modal-qty-minus');
     const modalPlus = document.getElementById('modal-qty-plus');
     const modalQtyNum = document.getElementById('modal-qty-num');
@@ -434,7 +426,6 @@ function setupProductModal() {
         });
     }
     
-    // زر التأكيد والإضافة النهائية للسلة
     const confirmBtn = document.getElementById('confirm-add-to-cart');
     if (confirmBtn) {
         confirmBtn.addEventListener('click', () => {
@@ -450,21 +441,18 @@ function openCustomizerModal(productId) {
     
     state.currentCustomizingProduct = prod;
     
-    // إعادة تعيين تفاصيل حالة التخصيص
     state.customizationState = {
         productId: prod.id,
-        selectedOption: prod.options[0], // نحدد أول خيار إجباري بشكل افتراضي
+        selectedOption: prod.options[0],
         selectedAddons: [],
         quantity: 1
     };
     
-    // تعبئة البيانات بالـ DOM
     document.getElementById('modal-product-img').src = prod.image;
     document.getElementById('modal-product-title').innerText = prod.name;
     document.getElementById('modal-product-desc').innerText = prod.description;
     document.getElementById('modal-qty-num').innerText = state.customizationState.quantity;
     
-    // توليد قائمة الخيارات الإجبارية (Required)
     const optionsContainer = document.getElementById('options-required-list');
     optionsContainer.innerHTML = prod.options.map((opt, idx) => `
         <label class="custom-option-label">
@@ -477,7 +465,6 @@ function openCustomizerModal(productId) {
         </label>
     `).join('');
     
-    // ربط الحدث لأزرار الراديو لإعادة الحساب الفوري للسعر
     optionsContainer.querySelectorAll('input[type="radio"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             const selectedOptId = e.target.value;
@@ -486,7 +473,6 @@ function openCustomizerModal(productId) {
         });
     });
     
-    // توليد قائمة الإضافات الاختيارية (Optional Add-ons)
     const addonsContainer = document.getElementById('addons-optional-list');
     if (prod.addons && prod.addons.length > 0) {
         document.getElementById('addons-section-wrapper').style.display = 'block';
@@ -501,7 +487,6 @@ function openCustomizerModal(productId) {
             </label>
         `).join('');
         
-        // ربط الحدث لتشيكبوكس الإضافات لإعادة حساب السعر الفوري
         addonsContainer.querySelectorAll('input[type="checkbox"]').forEach(check => {
             check.addEventListener('change', () => {
                 const checkedElements = addonsContainer.querySelectorAll('input[type="checkbox"]:checked');
@@ -515,10 +500,7 @@ function openCustomizerModal(productId) {
         document.getElementById('addons-section-wrapper').style.display = 'none';
     }
     
-    // حساب وعرض السعر الأولي
     calculateModalPrice();
-    
-    // تفعيل النافذة
     document.getElementById('customizer-modal-overlay').classList.add('active');
 }
 
@@ -532,8 +514,6 @@ function calculateModalPrice() {
     const quantity = state.customizationState.quantity;
     
     const finalPrice = (optionPrice + addonsTotal) * quantity;
-    
-    // تحديث السعر المعروض في زر التأكيد السفلي
     document.getElementById('modal-total-price-badge').innerText = `${finalPrice} ر.س`;
 }
 
@@ -551,7 +531,6 @@ function confirmProductAddition() {
         singleItemPrice: state.customizationState.selectedOption.price + state.customizationState.selectedAddons.reduce((sum, a) => sum + a.price, 0)
     };
     
-    // التحقق من تكرار نفس المنتج تماماً بنفس الخيارات والإضافات لزيادة الكمية فقط
     const existingIndex = state.cart.findIndex(item => item.uniqueId === newCartItem.uniqueId);
     if (existingIndex > -1) {
         state.cart[existingIndex].quantity += newCartItem.quantity;
@@ -559,14 +538,11 @@ function confirmProductAddition() {
         state.cart.push(newCartItem);
     }
     
-    // إغلاق المودال وتحديث السلة
     document.getElementById('customizer-modal-overlay').classList.remove('active');
     updateCartUI();
     
-    // تفعيل انيميشن لطيف وإشعار نجاح
     showToast(`تمت إضافة ${prod.name} لسلة طلباتك 🛒`);
     
-    // تفعيل اهتزاز خفيف لزر السلة العائم لتنبيه العميل
     const floatCart = document.getElementById('floating-cart-wrapper');
     floatCart.style.animation = 'none';
     setTimeout(() => {
@@ -608,15 +584,11 @@ function updateCartUI() {
     const totalDisplay = document.getElementById('cart-total-price');
     
     if (totalItems > 0) {
-        // إظهار السلة العائمة
         floatingCart.classList.add('active');
         countBadge.innerText = totalItems;
         totalDisplay.innerText = `${totalPrice} ر.س`;
     } else {
-        // إخفاء السلة العائمة
         floatingCart.classList.remove('active');
-        
-        // إغلاق لوحة السلة المنزلقة تلقائياً إذا أصبحت فارغة
         document.getElementById('cart-drawer-overlay').classList.remove('active');
     }
 }
@@ -669,8 +641,6 @@ function renderCartItems() {
         `;
     }).join('');
     
-    // ربط الأحداث داخل السلة
-    // 1. الحذف بالكامل
     container.querySelectorAll('.remove-item-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const uniqueId = btn.getAttribute('data-unique-id');
@@ -678,7 +648,6 @@ function renderCartItems() {
         });
     });
     
-    // 2. تخفيض الكمية
     container.querySelectorAll('.btn-cart-minus').forEach(btn => {
         btn.addEventListener('click', () => {
             const uniqueId = btn.getAttribute('data-unique-id');
@@ -686,7 +655,6 @@ function renderCartItems() {
         });
     });
     
-    // 3. زيادة الكمية
     container.querySelectorAll('.btn-cart-plus').forEach(btn => {
         btn.addEventListener('click', () => {
             const uniqueId = btn.getAttribute('data-unique-id');
@@ -694,7 +662,6 @@ function renderCartItems() {
         });
     });
     
-    // تحديث ملخص الحساب
     updateCartSummary();
 }
 
@@ -714,7 +681,6 @@ function changeCartItemQty(uniqueId, delta) {
     if (index > -1) {
         state.cart[index].quantity += delta;
         
-        // إذا أصبحت الكمية صفر أو أقل يتم الحذف
         if (state.cart[index].quantity <= 0) {
             state.cart.splice(index, 1);
             showToast("تم حذف الصنف لتصفير الكمية");
@@ -748,7 +714,6 @@ function setupCheckout() {
     if (successCloseBtn) {
         successCloseBtn.addEventListener('click', () => {
             document.getElementById('success-modal-overlay').classList.remove('active');
-            // تصفير السلة
             state.cart = [];
             updateCartUI();
             document.getElementById('cart-drawer-overlay').classList.remove('active');
@@ -765,7 +730,6 @@ function processCheckout() {
     const table = tableInput.value.trim();
     const notes = noteInput.value.trim();
     
-    // التحقق المبدئي الفاخر
     if (!name) {
         showToast("يرجى كتابة الاسم لتسجيل طلبك ⚠️");
         nameInput.focus();
@@ -777,7 +741,6 @@ function processCheckout() {
         return;
     }
     
-    // صياغة تفاصيل الطلب بشكل متكامل وجذاب لإرساله واتساب
     let whatsappText = `*طلب جديد من منيو النخبة الفاخر* 🌟\n\n`;
     whatsappText += `👤 *العميل:* ${name}\n`;
     whatsappText += `📍 *رقم الطاولة:* ${table}\n`;
@@ -800,19 +763,15 @@ function processCheckout() {
     whatsappText += `💰 *إجمالي الطلب:* ${totalPrice} ر.س\n`;
     whatsappText += `✨ شكراً لطلبكم ونرجو لكم وجبة شهية!`;
     
-    // ترميز النص ليتوافق مع رابط WhatsApp
     const encodedText = encodeURIComponent(whatsappText);
-    const whatsappUrl = `https://api.whatsapp.com/send?phone=966500000000&text=${encodedText}`; // رقم واتساب افتراضي
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=966500000000&text=${encodedText}`;
     
-    // فتح نافذة النجاح الفاخرة أولاً
     document.getElementById('success-modal-overlay').classList.add('active');
     
-    // تفريغ المدخلات
     nameInput.value = '';
     tableInput.value = '';
     noteInput.value = '';
     
-    // فتح رابط واتساب بعد ثانية واحدة لإجراء الطلب الفعلي
     setTimeout(() => {
         window.open(whatsappUrl, '_blank');
     }, 1200);
@@ -820,7 +779,6 @@ function processCheckout() {
 
 // --- 8. أدوات تحسين تجربة الزائر (Toasts) ---
 function showToast(message) {
-    // إنشاء كائن توست يدويًا
     const toast = document.createElement('div');
     toast.className = 'toast-notification';
     toast.innerHTML = `
@@ -839,13 +797,11 @@ function showToast(message) {
     
     document.body.appendChild(toast);
     
-    // ظهور سريع
     setTimeout(() => {
         toast.style.transform = 'translateX(-50%) translateY(0)';
         toast.style.opacity = '1';
     }, 50);
     
-    // اختفاء
     setTimeout(() => {
         toast.style.transform = 'translateX(-50%) translateY(-20px)';
         toast.style.opacity = '0';

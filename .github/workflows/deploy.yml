@@ -19,7 +19,7 @@ jobs:
         php-version: '8.2' # تأكد من مطابقة إصدار الPHP الخاص بمشروعك
 
     - name: 📦 Install Dependencies
-      run: composer install --no-dev --optimize-autoloader --no-ansi --no-interaction --no-progress --no-scripts
+      run: composer install --optimize-autoloader --no-ansi --no-interaction --no-progress --no-scripts
 
     - name: 📂 Sync files to Hostinger via FTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
