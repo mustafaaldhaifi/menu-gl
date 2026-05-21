@@ -1,0 +1,37 @@
+name: Deploy Greenland Menu on Push
+
+on:
+  push:
+    branches:
+      - main # غيرها إلى master إذا كان اسم الفرع الرئيسي عندك master
+
+jobs:
+  web-deploy:
+    name: 🎉 Deploying to Hostinger
+    runs-on: ubuntu-latest
+    steps:
+    - name: 🚚 Get latest code
+      uses: actions/checkout@v4
+    
+    - name: 🛠️ Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2' # تأكد من مطابقة إصدار الPHP الخاص بمشروعك
+
+    - name: 📦 Install Dependencies
+      run: composer install --no-dev --optimize-autoloader --no-ansi --no-interaction --no-progress --no-scripts
+
+    - name: 📂 Sync files to Hostinger via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        port: 21
+        server-dir: /public_html/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/tests/**
+          .env
