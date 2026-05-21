@@ -32,7 +32,9 @@ jobs:
         exclude: |
           **/.git*
           **/.git*/**
-          vendor/
           **/node_modules/**
           **/tests/**
+          vendor/
+          bootstrap/cache/*
+          storage/framework/cache/*
           .env
