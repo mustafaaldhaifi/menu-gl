@@ -1,27 +1,19 @@
-name: Deploy Greenland Menu on Push
+name: Deploy Code Only (No Vendor)
 
 on:
   push:
     branches:
-      - main # غيرها إلى master إذا كان اسم الفرع الرئيسي عندك master
+      - main # أو master حسب اسم فرعك الرئيسي
 
 jobs:
   web-deploy:
-    name: 🎉 Deploying to Hostinger
+    name: 🎉 Fast Code-Only Deploy
     runs-on: ubuntu-latest
     steps:
     - name: 🚚 Get latest code
       uses: actions/checkout@v4
-    
-    - name: 🛠️ Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.2' # تأكد من مطابقة إصدار الPHP الخاص بمشروعك
 
-    - name: 📦 Install Dependencies
-      run: composer install --optimize-autoloader --no-ansi --no-interaction --no-progress --no-scripts
-
-    - name: 📂 Sync files to Hostinger via FTP
+    - name: 📂 Sync Code to Hostinger via FTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ${{ secrets.FTP_SERVER }}
@@ -29,12 +21,13 @@ jobs:
         password: ${{ secrets.FTP_PASSWORD }}
         port: 21
         server-dir: /public_html/
+        # نمنع الأداة تماماً من التعامل مع المجلدات الثقيلة والكاش والملفات الحساسة
         exclude: |
-          **/.git*
-          **/.git*/**
+          **/vendor/**
           **/node_modules/**
           **/tests/**
-          vendor/
+          **/.git*
+          **/.git*/**
+          .env
           bootstrap/cache/*
           storage/framework/cache/*
-          .env
