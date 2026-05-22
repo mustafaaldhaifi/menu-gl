@@ -377,6 +377,7 @@ class SyncController extends Controller
                             'price' => $addon['price'] ?? 0,
                             'is_hidden' => $addon['is_hidden'] ?? $addon['isHidden'] ?? 0,
                             'enabled' => $addon['enabled'] ?? 1,
+                            'currency_id' => $addon['currency_id'] ?? 1,
                             'order_no' => $addon['order_no'] ?? $addon['orderNo'] ?? 0,
                             'store_branch_id' => $addon['store_branch_id'] ?? $addon['storeBranchId'] ?? null,
                             'order_at' => $addon['order_at'] ?? $addon['orderAt'] ?? null,
@@ -390,6 +391,7 @@ class SyncController extends Controller
                             'price',
                             'is_hidden',
                             'enabled',
+                            'currency_id',
                             'order_no',
                             'store_branch_id',
                             'order_at',
@@ -421,6 +423,8 @@ class SyncController extends Controller
                         $insertData = [
                             'id' => $view['id'],
                             'name' => $view['name'] ?? null,
+                            'product_view_id' => $view['product_view_id'] ?? 1,
+
                             // 'cover' => $coverName,
                             // 'order_no' => $view['order_no'] ?? $view['orderNo'] ?? 0,
                             // 'order_at' => $view['order_at'] ?? $view['orderAt'] ?? null,
@@ -435,7 +439,7 @@ class SyncController extends Controller
                             'name',
                             // 'cover',
                             // 'order_no',
-                            // 'order_at',
+                            'product_view_id',
                             'store_branch_id',
                             // 'is_hidden',
                             // 'enabled',
