@@ -424,6 +424,8 @@ class SyncController extends Controller
                             'id' => $view['id'],
                             'name' => $view['name'] ?? null,
                             'product_view_id' => $view['product_view_id'] ?? 1,
+                            'store_nested_section_id' => $view['store_nested_section_id'] ?? 1,
+
 
                             // 'cover' => $coverName,
                             // 'order_no' => $view['order_no'] ?? $view['orderNo'] ?? 0,
@@ -439,6 +441,7 @@ class SyncController extends Controller
                             'name',
                             // 'cover',
                             // 'order_no',
+                            'store_nested_section_id',
                             'product_view_id',
                             'store_branch_id',
                             // 'is_hidden',
