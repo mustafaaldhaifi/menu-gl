@@ -326,33 +326,52 @@ class SyncController extends Controller
                 // 6. صور معرض المنتجات (product_images)
                 foreach ($products_images as $imgWrapper) {
                     try {
+                        // 1. فك غلاف الـ stdClass لضمان قراءة الـ Payload
                         $img = $imgWrapper['stdClass'] ?? $imgWrapper;
+
+                        // التحقق من وجود الـ id الأساسي للسجل لمنع التكرار العشوائي
+                        if (!isset($img['id'])) {
+                            continue;
+                        }
 
                         $prodId = $img['product_id'] ?? $img['productId'] ?? null;
                         $imgUrl = $img['image'] ?? null;
 
+                        // إذا كان المنتج أو رابط الصورة مفقوداً، نتخطى السجل فوراً لحماية الجدول
                         if (!$prodId || !$imgUrl) {
                             continue;
                         }
 
+                        // 2. معالجة تحميل الصورة محلياً
                         $prefix = "gallery_{$prodId}_";
                         $localImage = $this->handleLaravelImageDownload($imgUrl, 'products/gallery', $prefix);
+
+                        // إذا فشل التحميل على السيرفر لأي سبب، نعتمد الرابط الأصلي كـ Fallback لحماية الواجهة من الاختفاء
                         $imageName = $localImage ?? $imgUrl;
 
-                        ProductImage::updateOrCreate(
-                            [
-                                'product_id' => $prodId,
-                                'image' => $imageName
-                            ],
-                            [
-                                'store_branch_id' => $img['store_branch_id'] ?? $img['storeBranchId'] ?? 1,
-                                'created_at' => $img['created_at'] ?? $img['createdAt'] ?? now(),
-                                'updated_at' => now()
-                            ]
-                        );
+                        // 3. بناء مصفوفة البيانات المتكاملة والمقاومة للـ PostgreSQL / MySQL
+                        $insertData = [
+                            'id' => $img['id'],
+                            'product_id' => $prodId,
+                            'image' => $imageName,
+                            'store_branch_id' => $img['store_branch_id'] ?? $img['storeBranchId'] ?? 1,
+                            'created_at' => $img['created_at'] ?? $img['createdAt'] ?? now(),
+                            'updated_at' => now(), // وقت المزامنة الحالي
+                        ];
+
+                        // 4. الأعمدة التي سيتم تحديثها حصراً إذا كان الـ id موجوداً مسبقاً
+                        $updateColumns = [
+                            'product_id',
+                            'image',
+                            'store_branch_id',
+                            'updated_at'
+                        ];
+
+                        // 5. تنفيذ الـ upsert المباشر فائق السرعة
+                        ProductImage::upsert([$insertData], ['id'], $updateColumns);
 
                     } catch (Exception $e) {
-                        Log::error("خطأ في معالجة صورة المنتج للمعرض: " . $e->getMessage());
+                        Log::error("خطأ في معالجة صورة المنتج للمعرض ID: " . ($img['id'] ?? 'unknown') . " - " . $e->getMessage());
                     }
                 }
 
