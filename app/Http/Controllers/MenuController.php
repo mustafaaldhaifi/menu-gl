@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Log;
 
 class MenuController extends Controller
 {
@@ -26,6 +27,7 @@ class MenuController extends Controller
         $categories = \App\Models\Category::where('store_branch_id', $branchId)->get();
         $storeViews = \App\Models\StoreProductView::where('store_branch_id', $branchId)->get();
 
+        Log::error($categories);
         $formattedProducts = $products->map(function ($product) {
             $nestedSection = $product->nestedSection;
             $section = $nestedSection?->section;
