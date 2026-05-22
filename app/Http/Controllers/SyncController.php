@@ -51,44 +51,50 @@ class SyncController extends Controller
     {
         // جلب المصفوفة بالطريقة الصحيحة للارافل مباشرة بناءً على الـ Log
         $store_nested_sections = $request->input('store_nested_sections', []);
-        $report = [
-            'categories_synced' => 0,
-            'errors' => []
-        ];
 
-        if (empty($store_nested_sections)) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'No sections found in payload',
-                'debug_keys' => array_keys($request->all())
-            ], 400);
-        }
+
+
+
 
         try {
-            DB::transaction(function () use ($store_nested_sections, &$report) {
+            DB::transaction(function () use ($store_nested_sections) {
 
                 foreach ($store_nested_sections as $sectionWrapper) {
                     try {
-                        // 🔹 حل لغز الـ stdClass النهائي:
-                        // بما أن الطرف المرسل يضع البيانات داخل كائن مفتاحه "stdClass"،
-                        // نقوم بالتقاطه مباشرة، وإذا لم يوجد نأخذ الـ wrapper نفسه.
+                        // 🔹 فك غلاف الـ stdClass
                         $cat = $sectionWrapper['stdClass'] ?? $sectionWrapper;
 
                         // التحقق من أن الـ ID متوفر لمنع ضرب الكود
                         if (!isset($cat['id'])) {
-                            $report['errors'][] = "Missing ID in element row.";
                             continue;
                         }
 
-                        // 1. الحقل الإلزامي الفريد في الـ PostgreSQL / MySQL
+                        // معالجة الصورة أولاً إذا كانت مرسلة ولها رابط
+                        $coverName = $cat['cover'] ?? null;
+                        if (!empty($cat['cover'])) {
+                            $prefix = "cat_{$cat['id']}_";
+                            $localImage = $this->handleLaravelImageDownload($cat['cover'], 'nested_sections', $prefix);
+                            $coverName = $localImage ?? $cat['cover'];
+                        }
+
+                        // 1. بناء مصفوفة السجل الكاملة مباشرة بدون فحص للحقول
                         $insertData = [
                             'id' => $cat['id'],
+                            'name' => $cat['name'] ?? null,
+                            'cover' => $coverName,
+                            'order_no' => $cat['order_no'] ?? 0,
+                            'order_at' => $cat['order_at'] ?? null,
+                            'store_branch_id' => $cat['store_branch_id'] ?? null,
+                            'store_section_id' => $cat['store_section_id'] ?? null,
+                            'is_hidden' => $cat['is_hidden'] ?? 0,
+                            'enabled' => $cat['enabled'] ?? 1,
+                            'created_at' => $cat['created_at'] ?? now(),
+                            'updated_at' => now(), // تحديث وقت المزامنة محلياً دائماً
                         ];
 
-                        $updateColumns = [];
-
-                        // 2. الحقول المطابقة تماماً لملف الـ Log المرسل بنمط snake_case
-                        $optionalFields = [
+                        // 2. تحديد جميع الأعمدة التي ستخضع للتحديث الكامل عند حدوث تكرار (Upsert)
+                        // (إذا كنت لا تريد تغيير الـ created_at القديم عند التحديث، يمكنك حذفه من هذه القائمة)
+                        $updateColumns = [
                             'name',
                             'cover',
                             'order_no',
@@ -97,46 +103,20 @@ class SyncController extends Controller
                             'store_section_id',
                             'is_hidden',
                             'enabled',
-                            'created_at'
+                            'updated_at'
                         ];
 
-                        // فحص وبناء المصفوفة ديناميكياً بناءً على ما أُرسل فعلياً
-                        foreach ($optionalFields as $field) {
-                            if (isset($cat[$field])) {
-
-                                // معالجة الصور بشكل احترافي
-                                if ($field === 'cover') {
-                                    $prefix = "cat_{$cat['id']}_";
-                                    $localImage = $this->handleLaravelImageDownload($cat['cover'], 'nested_sections', $prefix);
-
-                                    $insertData[$field] = $localImage ?? $cat['cover'];
-                                } else {
-                                    $insertData[$field] = $cat[$field];
-                                }
-
-                                // نحدث كل الحقول ما عدا تاريخ الإنشاء الأصلي لعدم تزوير المزامنة القديمة
-                                if ($field !== 'created_at') {
-                                    $updateColumns[] = $field;
-                                }
-                            }
-                        }
-
-                        // تحديث وقت التعديل محلياً لتوثيق وقت الاستلام
-                        $insertData['updated_at'] = now();
-                        $updateColumns[] = 'updated_at';
-
-                        // 3. ضربة الـ upsert القاضية والآمنة
+                        // 3. تنفيذ عملية الـ upsert للسجل الكامل دفعة واحدة
                         NestedSection::upsert([$insertData], ['id'], $updateColumns);
 
-                        $report['categories_synced']++;
-
                     } catch (Exception $e) {
-                        $report['errors'][] = "Error inside section execution: " . $e->getMessage();
+                        // يمكنك تسجيل الخطأ هنا في الـ Log إذا أردت متابعته
+                        Log::error("خطأ في معالجة القسم ID: " . ($cat['id'] ?? 'unknown') . " - " . $e->getMessage());
                     }
                 }
             });
 
-            return response()->json(['status' => 'success', 'report' => $report]);
+            return response()->json(['status' => 'success']);
 
         } catch (Exception $e) {
             Log::error("فشلت عملية المزامنة addOrUpdateOne بالكامل: " . $e->getMessage());
