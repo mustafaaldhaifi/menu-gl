@@ -69,7 +69,8 @@ class MenuController extends Controller
             ];
         });
 
-           Log::error($formattedProducts);
+           Log::error($products);
+        //    Log::error($formattedProducts);
         $formattedCategories = $categories->map(function ($cat) {
             return [
                 'id' => $cat->id,
