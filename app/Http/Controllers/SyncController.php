@@ -52,7 +52,7 @@ class SyncController extends Controller
     {
         DB::transaction(function () use ($input) {
 
-            foreach ($input['storeCategories']['store_nested_sections'] as $cat) {
+            foreach ($input['store_nested_sections'] as $cat) {
                 try {
                     // 1. الحقول الإلزامية
                     $insertData = [
