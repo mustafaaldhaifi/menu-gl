@@ -66,7 +66,7 @@ class SyncController extends Controller
         $store_product_views = $request->input('store_product_views') ?? $request->input('storeProductViews', []);
         $product_views = $request->input('product_views') ?? $request->input('productViews', []);
 
-        // Log::error($request->all());
+        Log::error($products_images);
         try {
             DB::transaction(function () use ($store_categories, $store_sections, $store_nested_sections, $products, $product_options, $products_images, $product_addons, $store_product_views, $product_views) {
 
