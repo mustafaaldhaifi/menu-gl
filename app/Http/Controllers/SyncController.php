@@ -61,7 +61,7 @@ class SyncController extends Controller
         $store_nested_sections = $request->input('store_nested_sections', []);
         $products = $request->input('products', []);
         $product_options = $request->input('product_options') ?? $request->input('productOptions', []);
-        $products_images = $request->input('product_images') ?? $request->input('productsImages') ?? $request->input('productImages', []);
+        $products_images = $request->input('products_images') ?? $request->input('productsImages') ?? $request->input('productImages', []);
         $product_addons = $request->input('product_addons') ?? $request->input('productAddons', []);
         $store_product_views = $request->input('store_product_views') ?? $request->input('storeProductViews', []);
         $product_views = $request->input('product_views') ?? $request->input('productViews', []);
