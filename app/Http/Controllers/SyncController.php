@@ -70,46 +70,7 @@ class SyncController extends Controller
         try {
             DB::transaction(function () use ($store_categories, $store_sections, $store_nested_sections, $products, $product_options, $products_images, $product_addons, $store_product_views, $product_views) {
 
-                // 9. ربط المنتجات بطرق العرض (product_views)
-                foreach ($product_views as $pViewWrapper) {
-                    try {
-                        // 1. فك غلاف الـ stdClass
-                        $pv = $pViewWrapper['stdClass'] ?? $pViewWrapper;
 
-                        // التحقق من وجود الـ id الأساسي للسجل لمنع ضرب التحديث
-                        if (!isset($pv['id'])) {
-                            continue;
-                        }
-
-                        $prodId = $pv['product_id'] ?? $pv['productId'] ?? null;
-                        $viewId = $pv['store_product_view_id'] ?? $pv['storeProductViewId'] ?? null;
-
-                        // تخطي السجل إذا كانت العلاقات الأساسية مفقودة تماماً لضمان سلامة الـ Foreign Keys
-                        if (!$prodId || !$viewId) {
-                            continue;
-                        }
-
-                        // 2. بناء مصفوفة السجل الكاملة
-                        $insertData = [
-                            'id' => $pv['id'],
-                            'name' => (!isset($pv['name']) || trim($pv['name']) === '') ? 'عرض افتراضي' : $pv['name'],
-                            'created_at' => $pv['created_at'] ?? $pv['createdAt'] ?? now(),
-                            'updated_at' => now(), // وقت المزامنة الحالي
-                        ];
-
-                        // 3. الأعمدة المراد تحديثها بالكامل في حال كان الـ id موجوداً مسبقاً
-                        $updateColumns = [
-                            'name',
-                            'updated_at'
-                        ];
-
-                        // 4. تنفيذ العملية بضربة واحدة سريعة وآمنة للـ PostgreSQL / MySQL
-                        ProductView::upsert([$insertData], ['id'], $updateColumns);
-
-                    } catch (Exception $e) {
-                        Log::error("خطأ في معالجة ربط المنتج بالـ View للسجل ID: " . ($pv['id'] ?? 'unknown') . " - " . $e->getMessage());
-                    }
-                }
                 // 1. الفئات الرئيسية للمتجر (store_categories)
                 foreach ($store_categories as $catWrapper) {
                     try {
@@ -473,6 +434,39 @@ class SyncController extends Controller
 
                     } catch (Exception $e) {
                         Log::error("خطأ في معالجة عرض المنتجات ID: " . ($view['id'] ?? 'unknown') . " - " . $e->getMessage());
+                    }
+                }
+                // 9. ربط المنتجات بطرق العرض (product_views)
+                foreach ($product_views as $pViewWrapper) {
+                    try {
+                        // 1. فك غلاف الـ stdClass
+                        $pv = $pViewWrapper['stdClass'] ?? $pViewWrapper;
+
+                        // التحقق من وجود الـ id الأساسي للسجل لمنع ضرب التحديث
+                        if (!isset($pv['id'])) {
+                            continue;
+                        }
+
+
+                        // 2. بناء مصفوفة السجل الكاملة
+                        $insertData = [
+                            'id' => $pv['id'],
+                            'name' => (!isset($pv['name']) || trim($pv['name']) === '') ? 'عرض افتراضي' : $pv['name'],
+                            'created_at' => $pv['created_at'] ?? $pv['createdAt'] ?? now(),
+                            'updated_at' => now(), // وقت المزامنة الحالي
+                        ];
+
+                        // 3. الأعمدة المراد تحديثها بالكامل في حال كان الـ id موجوداً مسبقاً
+                        $updateColumns = [
+                            'name',
+                            'updated_at'
+                        ];
+
+                        // 4. تنفيذ العملية بضربة واحدة سريعة وآمنة للـ PostgreSQL / MySQL
+                        ProductView::upsert([$insertData], ['id'], $updateColumns);
+
+                    } catch (Exception $e) {
+                        Log::error("خطأ في معالجة ربط المنتج بالـ View للسجل ID: " . ($pv['id'] ?? 'unknown') . " - " . $e->getMessage());
                     }
                 }
 
