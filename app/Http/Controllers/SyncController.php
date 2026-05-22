@@ -16,7 +16,7 @@ use Str;
 
 class SyncController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
 
         // 1. إعداد الحماية
@@ -36,10 +36,12 @@ class SyncController extends Controller
 
         $strategy = $input['strategy'] ?? null; // استخدام ?? null لتجنب Warning
 
+
+
         if ($strategy == 'replaceAll') { // ⚠️ تصحيح: استخدام == بدلاً من =
             $this->replaceAll($uploadBase, $input);
         } elseif ($strategy == 'addOrUpdateOne' || $strategy == 'addOrUpdate') { // ⚠️ تصحيح: استخدام ==
-            $this->addOrUpdateOne($input);
+            $this->addOrUpdateOne($request);
         } elseif ($strategy == 'delete') { // ⚠️ تصحيح: استخدام ==
             // $this->deleteStrategy($pdo, $uploadBase, $input);
         } else {
@@ -48,11 +50,13 @@ class SyncController extends Controller
         }
     }
 
-    function addOrUpdateOne($input)
+    function addOrUpdateOne($request)
     {
-        DB::transaction(function () use ($input) {
+        $store_nested_sections = $request->input('payload.store_nested_sections', []);
 
-            foreach ($input['store_nested_sections'] as $cat) {
+        DB::transaction(function () use ($store_nested_sections) {
+
+            foreach ($store_nested_sections as $cat) {
                 try {
                     // 1. الحقول الإلزامية
                     $insertData = [
