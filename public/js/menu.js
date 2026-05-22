@@ -315,9 +315,10 @@ function renderProducts() {
                 String(state.activeNestedSection);
 
         // فلتر البحث اللحظي
-        const matchesSearch =
-            prod.name.includes(state.searchQuery) ||
-            (prod.description && prod.description.includes(state.searchQuery));
+        const query = (state.searchQuery || "").toLowerCase();
+        const prodName = (prod.name || "").toLowerCase();
+        const prodDesc = (prod.description || "").toLowerCase();
+        const matchesSearch = prodName.includes(query) || prodDesc.includes(query);
 
         // فلاتر الميزات السريعة
         let matchesFilter = true;
