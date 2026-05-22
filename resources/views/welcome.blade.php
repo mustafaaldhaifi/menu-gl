@@ -9,8 +9,7 @@
     <title>مطعم وكافيه النخبة الفاخر | المنيو الإلكتروني التفاعلي 🌟</title>
     
     <!-- أيقونات FontAwesome للأشكال والأزرار -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">    
     <!-- استدعاء ملفات التنسيق والجافا سكريبت مباشرة بدون npm -->
     <link rel="stylesheet" href="{{ asset('css/menu.css') }}">
     <script src="{{ asset('js/menu.js') }}" defer></script>
@@ -35,7 +34,7 @@
             
             <div class="restaurant-profile">
                 <!-- صورة لوغو وهمية دائرية فاخرة للمطعم -->
-                <img src="https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=300&q=80" alt="شعار النخبة" class="restaurant-logo">
+                <img src="https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=300&q=80" alt="شعار النخبة" class="restaurant-logo" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=300&q=80';">
                 <div class="restaurant-info">
                     <h1 class="restaurant-name">
                         النخبة الفاخر
@@ -67,7 +66,7 @@
             </div>
             
             <!-- أزرار الفلترة الفورية -->
-            <div class="quick-tags-wrapper">
+            {{-- <div class="quick-tags-wrapper">
                 <button class="tag-badge" data-filter="popular">
                     <i class="fas fa-fire"></i> الأكثر طلباً
                 </button>
@@ -80,12 +79,16 @@
                 <button class="tag-badge" data-filter="favs">
                     <i class="fas fa-heart"></i> المفضلة لدي
                 </button>
-            </div>
+            </div> --}}
         </section>
 
         <!-- ==================== شريط التصنيفات اللاصق ==================== -->
         <nav class="categories-container" id="categories-container">
             <!-- سيتم توليده ديناميكياً عبر الجافاسكريبت -->
+        </nav>
+
+        <nav class="sub-categories-container" id="sub-categories-container">
+            <!-- سيتم توليد الأقسام والأقسام الفرعية هنا -->
         </nav>
 
         <!-- ==================== قائمة المنتجات والوجبات ==================== -->
@@ -118,7 +121,7 @@
         <div class="modal-overlay" id="customizer-modal-overlay">
             <div class="modal-content-container">
                 <div class="modal-header-image">
-                    <img id="modal-product-img" src="" alt="صورة المنتج" class="modal-img">
+                    <img id="modal-product-img" src="" alt="صورة المنتج" class="modal-img" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80';">
                     <button class="close-modal-btn" id="close-customizer-btn" title="إغلاق">
                         <i class="fas fa-times"></i>
                     </button>

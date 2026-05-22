@@ -1,146 +1,9 @@
 import './bootstrap';
 
-// --- قاعدة بيانات المنتجات الوهمية (Mock Database) ---
-// المنتجات ليس لديها أسعار ثابتة بل خياراتها هي التي تحدد السعر
-const PRODUCTS_DATA = [
-    {
-        id: 1,
-        name: "بيتزا مارغريتا نابوليتان",
-        category: "pizza",
-        description: "صلصة الطماطم الإيطالية الفاخرة، جبنة الموزاريلا الطازجة الذائبة، أوراق الريحان العضوي، ورشة زيت زيتون بكر ممتاز.",
-        image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=80",
-        tags: ["vegan", "popular"],
-        options: [
-            { id: "opt-1-1", name: "صغير (22 سم)", price: 28 },
-            { id: "opt-1-2", name: "وسط (28 سم)", price: 39 },
-            { id: "opt-1-3", name: "كبير (34 سم)", price: 49 }
-        ],
-        addons: [
-            { id: "add-1-1", name: "جبنة موزاريلا إضافية", price: 8 },
-            { id: "add-1-2", name: "فطر طازج", price: 5 },
-            { id: "add-1-3", name: "زيتون أسود إيطالي", price: 4 },
-            { id: "add-1-4", name: "شطة حارة مفرومة", price: 3 }
-        ]
-    },
-    {
-        id: 2,
-        name: "برجر كلاسيك أنجوس فاخر",
-        category: "burger",
-        description: "شريحة لحم بقري أنجوس مشوي على اللهب، جبنة شيدر ذائبة، خس مقرمش، طماطم طازجة، بصل مكرمل، وصلصة البرجر السرية الخاصة بنا.",
-        image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80",
-        tags: ["popular"],
-        options: [
-            { id: "opt-2-1", name: "سينغل (شريحة 150 جرام)", price: 26 },
-            { id: "opt-2-2", name: "دبل (شريحتين 300 جرام)", price: 36 },
-            { id: "opt-2-3", name: "تربل (ثلاث شرائح 450 جرام)", price: 46 }
-        ],
-        addons: [
-            { id: "add-2-1", name: "شريحة جبنة إضافية", price: 4 },
-            { id: "add-2-2", name: "شريحة لحم مقدد (بيكون)", price: 7 },
-            { id: "add-2-3", name: "قطع هلابينو حار", price: 3 },
-            { id: "add-2-4", name: "صلصة الباربكيو المدخنة", price: 3 }
-        ]
-    },
-    {
-        id: 3,
-        name: "بيتزا الخضار البستانية",
-        category: "pizza",
-        description: "صلصة الطماطم، جبن الموزاريلا، شرائح الفلفل الحلو، فطر طازج، بصل أحمر، طماطم كرزية، وزيتون أسود.",
-        image: "https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?auto=format&fit=crop&w=800&q=80",
-        tags: ["vegan"],
-        options: [
-            { id: "opt-3-1", name: "صغير (22 سم)", price: 26 },
-            { id: "opt-3-2", name: "وسط (28 سم)", price: 36 },
-            { id: "opt-3-3", name: "كبير (34 سم)", price: 46 }
-        ],
-        addons: [
-            { id: "add-3-1", name: "جبنة موزاريلا إضافية", price: 8 },
-            { id: "add-3-2", name: "شرائح الأفوكادو", price: 6 },
-            { id: "add-3-3", name: "صلصة ثوم إضافية", price: 2 }
-        ]
-    },
-    {
-        id: 4,
-        name: "برجر الدجاج المقرمش الحار",
-        category: "burger",
-        description: "صدر دجاج مقرمش متبل ومقلي بعناية، شريحة جبنة شيدر بيضاء، خس، مايونيز حار، هالبينو طازج في خبز البريوش الطازج.",
-        image: "https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?auto=format&fit=crop&w=800&q=80",
-        tags: ["spicy"],
-        options: [
-            { id: "opt-4-1", name: "دجاج مقرمش عادي", price: 22 },
-            { id: "opt-4-2", name: "دجاج مقرمش دبل", price: 30 }
-        ],
-        addons: [
-            { id: "add-4-1", name: "صلصة الديناميت الحارة", price: 3 },
-            { id: "add-4-2", name: "شريحة جبن إضافية", price: 4 },
-            { id: "add-4-3", name: "سلطة ملفوف (كولسلو)", price: 5 }
-        ]
-    },
-    {
-        id: 5,
-        name: "سبانش لاتيه بارد",
-        category: "coffee",
-        description: "إسبريسو مزدوج غني مصنوع من حبوب البن المختصة، مع حليب بارد مكثف ومحلى بلمستنا الخاصة مع الثلج.",
-        image: "https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=800&q=80",
-        tags: ["popular"],
-        options: [
-            { id: "opt-5-1", name: "وسط (Medium)", price: 16 },
-            { id: "opt-5-2", name: "كبير (Large)", price: 20 }
-        ],
-        addons: [
-            { id: "add-5-1", name: "جرعة إسبريسو إضافية (Double Shot)", price: 5 },
-            { id: "add-5-2", name: "حليب شوفان عضوي بديل", price: 6 },
-            { id: "add-5-3", name: "نكهة كراميل مضافة", price: 3 }
-        ]
-    },
-    {
-        id: 6,
-        name: "كورتادو كلاسيك حار",
-        category: "coffee",
-        description: "نسبة متوازنة تماماً من الإسبريسو المركز والحليب المبخر بقوام ناعم ومخملي دافئ.",
-        image: "https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=800&q=80",
-        tags: [],
-        options: [
-            { id: "opt-6-1", name: "كورتادو كلاسيك (كوب صغير)", price: 14 }
-        ],
-        addons: [
-            { id: "add-6-1", name: "رشة قرفة مطحونة", price: 2 },
-            { id: "add-6-2", name: "حليب اللوز البديل", price: 5 }
-        ]
-    },
-    {
-        id: 7,
-        name: "كعكة اللافا بالشوكولاتة",
-        category: "dessert",
-        description: "كعكة شوكولاتة بلجيكية داكنة ومحشوة بقلب شوكولاتة ساخن وذائب تماماً، تقدم مع آيس كريم الفانيليا الفاخر.",
-        image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=800&q=80",
-        tags: ["popular"],
-        options: [
-            { id: "opt-7-1", name: "كلاسيك (لافا شوكليت)", price: 24 },
-            { id: "opt-7-2", name: "دبل (مع شوكولاتة بيضاء إضافية)", price: 29 }
-        ],
-        addons: [
-            { id: "add-7-1", name: "كرة آيس كريم فانيليا إضافية", price: 5 },
-            { id: "add-7-2", name: "صلصة الفراولة الطازجة", price: 4 },
-            { id: "add-7-3", name: "شرائح فستق حلبي محمص", price: 4 }
-        ]
-    },
-    {
-        id: 8,
-        name: "تشيز كيك بالفراولة",
-        category: "dessert",
-        description: "تشيز كيك نيويورك الغني الكريمي على قاعدة مقرمشة من بسكويت الزبدة، مغطى بصلصة الفراولة الطازجة والمحلاة.",
-        image: "https://images.unsplash.com/photo-1524351199679-46cddf530c04?auto=format&fit=crop&w=800&q=80",
-        tags: [],
-        options: [
-            { id: "opt-8-1", name: "شريحة تشيز كيك كلاسيك", price: 22 }
-        ],
-        addons: [
-            { id: "add-8-1", name: "صلصة توت بري إضافية", price: 4 },
-            { id: "add-8-2", name: "صوص كراميل ناعم", price: 3 }
-        ]
-    }
-];
+// --- قاعدة بيانات المنتجات (Fetched from Database) ---
+let PRODUCTS_DATA = [];
+let CATEGORIES_DATA = [];
+let VIEWS_DATA = [];
 
 // --- إدارة حالة التطبيق (App State Management) ---
 const state = {
@@ -148,7 +11,7 @@ const state = {
     favorites: JSON.parse(localStorage.getItem('menu_favs')) || [],
     currentTheme: localStorage.getItem('menu_theme') || 'dark',
     activeCategory: 'all',
-    activeFilter: 'all', // all, vegan, spicy, popular, favs
+    activeFilter: 'all', // all, or view_id
     searchQuery: '',
     currentCustomizingProduct: null,
     customizationState: {
@@ -164,8 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initApp();
 });
 
-function initApp() {
+async function initApp() {
     setupTheme();
+    await fetchMenuData();
     renderCategories();
     renderProducts();
     setupCartDrawer();
@@ -176,6 +40,21 @@ function initApp() {
     
     // إخفاء الـ Loading إن وجد
     console.log("Elite Menu initialized successfully!");
+}
+
+async function fetchMenuData() {
+    try {
+        const response = await fetch('/api/menu');
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        PRODUCTS_DATA = data.products;
+        CATEGORIES_DATA = data.categories;
+        VIEWS_DATA = data.views;
+        renderViews();
+    } catch (error) {
+        console.error('Error fetching menu data:', error);
+        showToast("خطأ في تحميل البيانات، يرجى المحاولة لاحقاً ⚠️");
+    }
 }
 
 // --- 1. إعداد وإدارة مظهر السمة (Light/Dark Mode) ---
@@ -206,13 +85,7 @@ function renderCategories() {
     const container = document.getElementById('categories-container');
     if (!container) return;
     
-    const categories = [
-        { id: 'all', name: '🍽️ الكل' },
-        { id: 'pizza', name: '🍕 بيتزا نابوليتان' },
-        { id: 'burger', name: '🍔 برجر فاخر' },
-        { id: 'coffee', name: '☕ مشروبات' },
-        { id: 'dessert', name: '🍰 حلويات فاخرة' }
-    ];
+    const categories = CATEGORIES_DATA;
     
     container.innerHTML = categories.map(cat => `
         <button class="category-pill ${state.activeCategory === cat.id ? 'active' : ''}" data-cat-id="${cat.id}">
@@ -243,21 +116,17 @@ function renderProducts() {
     // تصفية المنتجات
     let filtered = PRODUCTS_DATA.filter(prod => {
         // فلتر التصنيف
-        const matchesCat = state.activeCategory === 'all' || prod.category === state.activeCategory;
+        const matchesCat = state.activeCategory === 'all' || String(prod.category) === String(state.activeCategory);
         
         // فلتر البحث اللحظي
         const matchesSearch = prod.name.includes(state.searchQuery) || prod.description.includes(state.searchQuery);
         
         // فلاتر الميزات السريعة
         let matchesFilter = true;
-        if (state.activeFilter === 'vegan') {
-            matchesFilter = prod.tags.includes('vegan');
-        } else if (state.activeFilter === 'spicy') {
-            matchesFilter = prod.tags.includes('spicy');
-        } else if (state.activeFilter === 'popular') {
-            matchesFilter = prod.tags.includes('popular');
-        } else if (state.activeFilter === 'favs') {
+        if (state.activeFilter === 'favs') {
             matchesFilter = state.favorites.includes(prod.id);
+        } else if (state.activeFilter !== 'all') {
+            matchesFilter = String(prod.view_id) === String(state.activeFilter);
         }
         
         return matchesCat && matchesSearch && matchesFilter;
@@ -369,6 +238,42 @@ function toggleFavorite(id, btnElement) {
 }
 
 // --- 4. معالجة البحث والفلترة السريعة ---
+function renderViews() {
+    const container = document.querySelector('.quick-tags-wrapper');
+    if (!container) return;
+
+    container.innerHTML = VIEWS_DATA.map(view => `
+        <button class="tag-badge ${state.activeFilter == view.id ? 'active' : ''}" data-filter="${view.id}">
+            ${view.name}
+        </button>
+    `).join('') + `
+        <button class="tag-badge ${state.activeFilter === 'favs' ? 'active' : ''}" data-filter="favs">
+            <i class="fas fa-heart"></i> المفضلة لدي
+        </button>
+    `;
+
+    setupViewsEvents();
+}
+
+function setupViewsEvents() {
+    const filterTags = document.querySelectorAll('.quick-tags-wrapper .tag-badge');
+    filterTags.forEach(tag => {
+        tag.addEventListener('click', (e) => {
+            const filterType = tag.getAttribute('data-filter');
+            
+            if (state.activeFilter == filterType) {
+                state.activeFilter = 'all';
+                tag.classList.remove('active');
+            } else {
+                filterTags.forEach(t => t.classList.remove('active'));
+                state.activeFilter = filterType;
+                tag.classList.add('active');
+            }
+            renderProducts();
+        });
+    });
+}
+
 function setupSearchAndFilters() {
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
@@ -377,24 +282,6 @@ function setupSearchAndFilters() {
             renderProducts();
         });
     }
-    
-    // فلاتر الميزات السريعة
-    const filterTags = document.querySelectorAll('.quick-tags-wrapper .tag-badge');
-    filterTags.forEach(tag => {
-        tag.addEventListener('click', (e) => {
-            filterTags.forEach(t => t.classList.remove('active'));
-            const filterType = tag.getAttribute('data-filter');
-            
-            if (state.activeFilter === filterType) {
-                // إلغاء الفلتر
-                state.activeFilter = 'all';
-            } else {
-                state.activeFilter = filterType;
-                tag.classList.add('active');
-            }
-            renderProducts();
-        });
-    });
 }
 
 // --- 5. منطق تخصيص وتجميع المنتج وحساب الأسعار التفاعلية ---
@@ -459,7 +346,7 @@ function openCustomizerModal(productId) {
     };
     
     // تعبئة البيانات بالـ DOM
-    document.getElementById('modal-product-img').src = prod.image;
+    document.getElementById('modal-product-img').src = (prod.images && prod.images.length > 0) ? prod.images[0] : prod.image;
     document.getElementById('modal-product-title').innerText = prod.name;
     document.getElementById('modal-product-desc').innerText = prod.description;
     document.getElementById('modal-qty-num').innerText = state.customizationState.quantity;
@@ -481,7 +368,16 @@ function openCustomizerModal(productId) {
     optionsContainer.querySelectorAll('input[type="radio"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             const selectedOptId = e.target.value;
-            state.customizationState.selectedOption = prod.options.find(o => o.id === selectedOptId);
+            const selectedOpt = prod.options.find(o => o.id == selectedOptId);
+            state.customizationState.selectedOption = selectedOpt;
+            
+            // تحديث الصورة إذا كان للخيار صورة خاصة
+            if (selectedOpt && selectedOpt.image) {
+                document.getElementById('modal-product-img').src = selectedOpt.image;
+            } else {
+                document.getElementById('modal-product-img').src = (prod.images && prod.images.length > 0) ? prod.images[0] : prod.image;
+            }
+            
             calculateModalPrice();
         });
     });
