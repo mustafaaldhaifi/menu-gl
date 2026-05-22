@@ -68,17 +68,7 @@ class SyncController extends Controller
 
         // Log::error($request->all());
         try {
-            DB::transaction(function () use (
-                $store_categories,
-                $store_sections,
-                $store_nested_sections,
-                $products,
-                $product_options,
-                $products_images,
-                $product_addons,
-                $store_product_views,
-                $product_views
-            ) {
+            DB::transaction(function () use ($store_categories, $store_sections, $store_nested_sections, $products, $product_options, $products_images, $product_addons, $store_product_views, $product_views) {
 
                 // 1. الفئات الرئيسية للمتجر (store_categories)
                 foreach ($store_categories as $catWrapper) {
@@ -374,6 +364,7 @@ class SyncController extends Controller
                             'id' => $addon['id'],
                             'product_id' => $addon['product_id'] ?? $addon['productId'] ?? null,
                             'name' => $addon['name'] ?? null,
+                            'description' => $addon['description'] ?? null, // ✅ تم الإصلاح هنا بوضع السهم =>
                             'price' => $addon['price'] ?? 0,
                             'is_hidden' => $addon['is_hidden'] ?? $addon['isHidden'] ?? 0,
                             'enabled' => $addon['enabled'] ?? 1,
@@ -388,6 +379,7 @@ class SyncController extends Controller
                         $updateColumns = [
                             'product_id',
                             'name',
+                            'description',
                             'price',
                             'is_hidden',
                             'enabled',
@@ -423,29 +415,19 @@ class SyncController extends Controller
                         $insertData = [
                             'id' => $view['id'],
                             'name' => $view['name'] ?? null,
-                            'product_view_id' => $view['product_view_id'] ?? 1,
-                            'store_nested_section_id' => $view['store_nested_section_id'] ?? 1,
-
-
-                            // 'cover' => $coverName,
-                            // 'order_no' => $view['order_no'] ?? $view['orderNo'] ?? 0,
-                            // 'order_at' => $view['order_at'] ?? $view['orderAt'] ?? null,
+                            'product_view_id' => $view['product_view_id'] ?? $view['productViewId'] ?? null,
+                            'store_nested_section_id' => $view['store_nested_section_id'] ?? $view['storeNestedSectionId'] ?? null,
                             'store_branch_id' => $view['store_branch_id'] ?? $view['storeBranchId'] ?? null,
-                            // 'is_hidden' => $view['is_hidden'] ?? $view['isHidden'] ?? 0,
-                            // 'enabled' => $view['enabled'] ?? 1,
                             'created_at' => $view['created_at'] ?? $view['createdAt'] ?? now(),
-                            'updated_at' => now(),
+                            'updated_at' => now(), // توثيق وقت المزامنة الحالي
                         ];
 
+                        // 3. تحديد الأعمدة التي سيتم تحديثها بالكامل في حال تكرار الـ id
                         $updateColumns = [
                             'name',
-                            // 'cover',
-                            // 'order_no',
-                            'store_nested_section_id',
                             'product_view_id',
+                            'store_nested_section_id',
                             'store_branch_id',
-                            // 'is_hidden',
-                            // 'enabled',
                             'updated_at'
                         ];
 
@@ -524,7 +506,8 @@ class SyncController extends Controller
             // في حال حدوث أي خطأ، نتأكد من تفعيل العلاقات الأجنبية مرة أخرى لتجنب تعطيل قاعدة البيانات
             try {
                 DB::statement('SET FOREIGN_KEY_CHECKS = 1;');
-            } catch (Exception $ignored) {}
+            } catch (Exception $ignored) {
+            }
 
             Log::error("فشلت عملية المزامنة replaceAll بالكامل: " . $e->getMessage());
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
