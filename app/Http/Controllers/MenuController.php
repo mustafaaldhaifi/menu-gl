@@ -24,6 +24,8 @@ class MenuController extends Controller
         //     ])
         //     ->get();
 
+        $rawCount = \App\Models\Product::where('store_branch_id', $branchId)->count();
+
         $products = Product::where('store_branch_id', $branchId)
             ->with([
                 // فلترة العلاقات المباشرة التابعة للفرع (خيار ممتاز لحماية الخيارات والصور)
@@ -82,7 +84,7 @@ class MenuController extends Controller
             ];
         });
 
-        Log::error($products);
+        Log::error($rawCount);
         //    Log::error($formattedProducts);
         $formattedCategories = $categories->map(function ($cat) {
             return [
