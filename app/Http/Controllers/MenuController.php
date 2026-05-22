@@ -27,7 +27,7 @@ class MenuController extends Controller
         $categories = \App\Models\Category::where('store_branch_id', $branchId)->get();
         $storeViews = \App\Models\StoreProductView::where('store_branch_id', $branchId)->get();
 
-        Log::error($categories);
+     
         $formattedProducts = $products->map(function ($product) {
             $nestedSection = $product->nestedSection;
             $section = $nestedSection?->section;
@@ -69,6 +69,7 @@ class MenuController extends Controller
             ];
         });
 
+           Log::error($formattedProducts);
         $formattedCategories = $categories->map(function ($cat) {
             return [
                 'id' => $cat->id,
