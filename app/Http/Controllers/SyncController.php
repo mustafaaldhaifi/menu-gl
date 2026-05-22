@@ -18,103 +18,188 @@ class SyncController extends Controller
 {
     public function index(Request $request)
     {
-
-        // 1. إعداد الحماية
-        $sentKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+        // 1. إعداد الحماية باستخدام أسلوب لارافل القياسي للـ Headers
+        $sentKey = $request->header('X-API-KEY') ?? '';
         if (trim($sentKey) !== "SECRET_KEY_123") {
-            http_response_code(403);
-            exit(json_encode(['error' => 'Unauthorized']));
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        // 2. استقبال البيانات والتحقق
-        $input = json_decode(file_get_contents('php://input'), true);
-        // if (!isset($input['products'])) {
-//     http_response_code(400);
-//     exit(json_encode(['error' => 'Invalid structure: "products" array missing']));
-// }
-        $uploadBase = __DIR__ . '/uploads/images/products';
+        // 2. جلب الاستراتيجية مباشرة من كائن الـ Request الآمن للارافل
+        $strategy = $request->input('payload.strategy') ?? $request->input('strategy');
 
-        $strategy = $input['strategy'] ?? null; // استخدام ?? null لتجنب Warning
+        // تحديد مسار المجلد المخصص للصور إذا دعت الحاجة
+        $uploadBase = public_path('uploads/images/products');
 
+        if ($strategy === 'replaceAll') {
+            // $this->replaceAll($uploadBase, $request->all());
+        } elseif ($strategy === 'addOrUpdateOne' || $strategy === 'addOrUpdate') {
 
+            // استدعاء دالة التحديث وتمرير الـ Request لها
+            return $this->addOrUpdateOne($request);
 
-        if ($strategy == 'replaceAll') { // ⚠️ تصحيح: استخدام == بدلاً من =
-            $this->replaceAll($uploadBase, $input);
-        } elseif ($strategy == 'addOrUpdateOne' || $strategy == 'addOrUpdate') { // ⚠️ تصحيح: استخدام ==
-            $this->addOrUpdateOne($request);
-        } elseif ($strategy == 'delete') { // ⚠️ تصحيح: استخدام ==
-            // $this->deleteStrategy($pdo, $uploadBase, $input);
+        } elseif ($strategy === 'delete') {
+            // $this->deleteStrategy($request->all());
         } else {
-            // حالة عدم تطابق أي استراتيجية
-            echo json_encode(['status' => 'error', 'message' => 'Invalid Strategy', 'strategy_received' => $strategy]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid Strategy',
+                'strategy_received' => $strategy
+            ], 400);
         }
     }
 
-    function addOrUpdateOne($request)
+    function addOrUpdateOne(Request $request)
     {
+        // جلب المصفوفة مباشرة من كائن الـ Request دون خوف من تفريغ البيانات
         $store_nested_sections = $request->input('payload.store_nested_sections', []);
 
-        DB::transaction(function () use ($store_nested_sections) {
+        $report = [
+            'categories_synced' => 0,
+            'errors' => []
+        ];
 
-            foreach ($store_nested_sections as $cat) {
-                try {
-                    // 1. الحقول الإلزامية
-                    $insertData = [
-                        'id' => $cat['id'],
-                    ];
+        // التحقق من أن المصفوفة ليست فارغة
+        if (empty($store_nested_sections)) {
+            return response()->json(['status' => 'error', 'message' => 'No sections found in payload'], 400);
+        }
 
-                    $updateColumns = [];
+        try {
+            DB::transaction(function () use ($store_nested_sections, &$report) {
 
-                    // قائمة بجميع الحقول المتوقعة
-                    $optionalFields = [
-                        'name',
-                        'cover',
-                        'order_no',
-                        'order_at',
-                        'store_branch_id',
-                        'is_hidden',
-                        'enabled',
-                        'created_at',
-                        'stores_section_id'
-                    ];
+                foreach ($store_nested_sections as $sectionWrapper) {
+                    try {
+                        // 🔹 معالجة التفاف كائن stdClass (مهم جداً بناءً على الـ JSON المرسل من سيرفرك)
+                        $cat = isset($sectionWrapper['stdClass']) ? $sectionWrapper['stdClass'] : $sectionWrapper;
 
-                    // 2. فحص الحقول ديناميكياً
-                    foreach ($optionalFields as $field) {
-                        if (isset($cat[$field])) {
+                        // 1. الحقل الإلزامي
+                        $insertData = [
+                            'id' => $cat['id'],
+                        ];
 
-                            // 🔹 هنا السحر: إذا كان الحقل هو الـ cover، نقوم بتحميل الصورة أولاً
-                            if ($field === 'cover') {
-                                $prefix = "cat_{$cat['id']}_";
-                                // حفظ الصورة في مجلد storage/app/public/categories
-                                $localImage = $this->handleLaravelImageDownload($cat['cover'], 'nested_sections', $prefix);
+                        $updateColumns = [];
 
-                                // إذا نجح التحميل نضع اسم الملف الجديد، وإذا فشل نترك الحقل كما هو أو null
-                                $insertData[$field] = $localImage ?? $cat['cover'];
-                            } else {
-                                // الحقول العادية النصية والرقمية تُؤخذ كما هي
-                                $insertData[$field] = $cat[$field];
-                            }
+                        // قائمة بجميع الحقول المتوقعة بنمط snake_case المطابق للـ داتابيز والـ JSON
+                        $optionalFields = [
+                            'name',
+                            'cover',
+                            'order_no',
+                            'order_at',
+                            'store_branch_id',
+                            'is_hidden',
+                            'enabled',
+                            'created_at',
+                            'stores_section_id'
+                        ];
 
-                            // إضافة الحقل للتحديث بشرط ألا يكون تاريخ الإنشاء
-                            if ($field !== 'created_at') {
-                                $updateColumns[] = $field;
+                        // 2. فحص الحقول ديناميكياً
+                        foreach ($optionalFields as $field) {
+                            if (isset($cat[$field])) {
+
+                                // إذا كان الحقل هو الـ cover، نقوم بتحميل الصورة أولاً عبر دالة الـ Storage
+                                if ($field === 'cover') {
+                                    $prefix = "cat_{$cat['id']}_";
+                                    $localImage = $this->handleLaravelImageDownload($cat['cover'], 'nested_sections', $prefix);
+
+                                    $insertData[$field] = $localImage ?? $cat['cover'];
+                                } else {
+                                    $insertData[$field] = $cat[$field];
+                                }
+
+                                // إضافة الحقل للتحديث بشرط ألا يكون تاريخ الإنشاء لضمان استقرار الداتابيز
+                                if ($field !== 'created_at') {
+                                    $updateColumns[] = $field;
+                                }
                             }
                         }
+
+                        // دائماً نحدث وقت التعديل محلياً
+                        $insertData['updated_at'] = now();
+                        $updateColumns[] = 'updated_at';
+
+                        // 3. تنفيذ الـ upsert الديناميكي بأمان داخل الـ Database
+                        NestedSection::upsert([$insertData], ['id'], $updateColumns);
+
+                        $report['categories_synced']++;
+
+                    } catch (Exception $e) {
+                        $report['errors'][] = "Category ID " . ($sectionWrapper['stdClass']['id'] ?? 'Unknown') . " error: " . $e->getMessage();
                     }
-
-                    // دائماً نحدث وقت التعديل
-                    $insertData['updated_at'] = now();
-                    $updateColumns[] = 'updated_at';
-
-                    // 3. تنفيذ الـ upsert الديناميكي بأمان
-                    NestedSection::upsert([$insertData], ['id'], $updateColumns);
-
-                } catch (Exception $e) {
-                    $report['errors'][] = "Category ID {$cat['id']} error: " . $e->getMessage();
                 }
-            }
-        });
+            });
+
+            return response()->json(['status' => 'success', 'report' => $report]);
+
+        } catch (Exception $e) {
+            Log::error("فشلت عملية المزامنة addOrUpdateOne: " . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
     }
+
+    // function addOrUpdateOne($request)
+    // {
+    //     $store_nested_sections = $request->input('payload.store_nested_sections', []);
+
+    //     DB::transaction(function () use ($store_nested_sections) {
+
+    //         foreach ($store_nested_sections as $cat) {
+    //             try {
+    //                 // 1. الحقول الإلزامية
+    //                 $insertData = [
+    //                     'id' => $cat['id'],
+    //                 ];
+
+    //                 $updateColumns = [];
+
+    //                 // قائمة بجميع الحقول المتوقعة
+    //                 $optionalFields = [
+    //                     'name',
+    //                     'cover',
+    //                     'order_no',
+    //                     'order_at',
+    //                     'store_branch_id',
+    //                     'is_hidden',
+    //                     'enabled',
+    //                     'created_at',
+    //                     'stores_section_id'
+    //                 ];
+
+    //                 // 2. فحص الحقول ديناميكياً
+    //                 foreach ($optionalFields as $field) {
+    //                     if (isset($cat[$field])) {
+
+    //                         // 🔹 هنا السحر: إذا كان الحقل هو الـ cover، نقوم بتحميل الصورة أولاً
+    //                         if ($field === 'cover') {
+    //                             $prefix = "cat_{$cat['id']}_";
+    //                             // حفظ الصورة في مجلد storage/app/public/categories
+    //                             $localImage = $this->handleLaravelImageDownload($cat['cover'], 'nested_sections', $prefix);
+
+    //                             // إذا نجح التحميل نضع اسم الملف الجديد، وإذا فشل نترك الحقل كما هو أو null
+    //                             $insertData[$field] = $localImage ?? $cat['cover'];
+    //                         } else {
+    //                             // الحقول العادية النصية والرقمية تُؤخذ كما هي
+    //                             $insertData[$field] = $cat[$field];
+    //                         }
+
+    //                         // إضافة الحقل للتحديث بشرط ألا يكون تاريخ الإنشاء
+    //                         if ($field !== 'created_at') {
+    //                             $updateColumns[] = $field;
+    //                         }
+    //                     }
+    //                 }
+
+    //                 // دائماً نحدث وقت التعديل
+    //                 $insertData['updated_at'] = now();
+    //                 $updateColumns[] = 'updated_at';
+
+    //                 // 3. تنفيذ الـ upsert الديناميكي بأمان
+    //                 NestedSection::upsert([$insertData], ['id'], $updateColumns);
+
+    //             } catch (Exception $e) {
+    //                 $report['errors'][] = "Category ID {$cat['id']} error: " . $e->getMessage();
+    //             }
+    //         }
+    //     });
+    // }
 
     private function handleLaravelImageDownload($url, $folder, $prefix)
     {
