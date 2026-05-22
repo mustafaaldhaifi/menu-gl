@@ -364,7 +364,6 @@ class SyncController extends Controller
                             'id' => $addon['id'],
                             'product_id' => $addon['product_id'] ?? $addon['productId'] ?? null,
                             'name' => $addon['name'] ?? null,
-                            'description' => $addon['description'] ?? null, // ✅ تم الإصلاح هنا بوضع السهم =>
                             'price' => $addon['price'] ?? 0,
                             'is_hidden' => $addon['is_hidden'] ?? $addon['isHidden'] ?? 0,
                             'enabled' => $addon['enabled'] ?? 1,
@@ -379,7 +378,6 @@ class SyncController extends Controller
                         $updateColumns = [
                             'product_id',
                             'name',
-                            'description',
                             'price',
                             'is_hidden',
                             'enabled',
@@ -414,7 +412,7 @@ class SyncController extends Controller
 
                         $insertData = [
                             'id' => $view['id'],
-                            'name' => $view['name'] ?? null,
+                            'name' => (!isset($view['name']) || trim($view['name']) === '') ? 'عرض افتراضي' : $view['name'],
                             'product_view_id' => $view['product_view_id'] ?? $view['productViewId'] ?? null,
                             'store_nested_section_id' => $view['store_nested_section_id'] ?? $view['storeNestedSectionId'] ?? null,
                             'store_branch_id' => $view['store_branch_id'] ?? $view['storeBranchId'] ?? null,
