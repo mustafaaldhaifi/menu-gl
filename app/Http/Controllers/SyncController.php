@@ -411,34 +411,34 @@ class SyncController extends Controller
                             continue;
                         }
 
-                        $coverName = $view['cover'] ?? null;
-                        if (!empty($view['cover'])) {
-                            $prefix = "view_{$view['id']}_";
-                            $localImage = $this->handleLaravelImageDownload($view['cover'], 'product_views/cover', $prefix);
-                            $coverName = $localImage ?? $view['cover'];
-                        }
+                        // $coverName = $view['cover'] ?? null;
+                        // if (!empty($view['cover'])) {
+                        //     $prefix = "view_{$view['id']}_";
+                        //     $localImage = $this->handleLaravelImageDownload($view['cover'], 'product_views/cover', $prefix);
+                        //     $coverName = $localImage ?? $view['cover'];
+                        // }
 
                         $insertData = [
                             'id' => $view['id'],
                             'name' => $view['name'] ?? null,
-                            'cover' => $coverName,
-                            'order_no' => $view['order_no'] ?? $view['orderNo'] ?? 0,
-                            'order_at' => $view['order_at'] ?? $view['orderAt'] ?? null,
+                            // 'cover' => $coverName,
+                            // 'order_no' => $view['order_no'] ?? $view['orderNo'] ?? 0,
+                            // 'order_at' => $view['order_at'] ?? $view['orderAt'] ?? null,
                             'store_branch_id' => $view['store_branch_id'] ?? $view['storeBranchId'] ?? null,
-                            'is_hidden' => $view['is_hidden'] ?? $view['isHidden'] ?? 0,
-                            'enabled' => $view['enabled'] ?? 1,
+                            // 'is_hidden' => $view['is_hidden'] ?? $view['isHidden'] ?? 0,
+                            // 'enabled' => $view['enabled'] ?? 1,
                             'created_at' => $view['created_at'] ?? $view['createdAt'] ?? now(),
                             'updated_at' => now(),
                         ];
 
                         $updateColumns = [
                             'name',
-                            'cover',
-                            'order_no',
-                            'order_at',
+                            // 'cover',
+                            // 'order_no',
+                            // 'order_at',
                             'store_branch_id',
-                            'is_hidden',
-                            'enabled',
+                            // 'is_hidden',
+                            // 'enabled',
                             'updated_at'
                         ];
 
