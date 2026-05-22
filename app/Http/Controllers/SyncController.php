@@ -50,8 +50,7 @@ class SyncController extends Controller
     function addOrUpdateOne(Request $request)
     {
         // جلب المصفوفة بالطريقة الصحيحة للارافل مباشرة بناءً على الـ Log
-        $store_nested_sections = $request->input('payload.store_nested_sections', []);
-
+        $store_nested_sections = $request->input('store_nested_sections', []);
         $report = [
             'categories_synced' => 0,
             'errors' => []
