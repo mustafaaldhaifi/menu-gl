@@ -230,6 +230,8 @@ class SyncController extends Controller
 
                         $insertData = [
                             'id' => $prod['id'],
+                            'store_branch_id' => $prod['store_branch_id'] ?? null,
+
                             'name' => $prod['name'] ?? null,
                             'description' => $prod['description'] ?? null,
                             'store_nested_section_id' => $prod['store_nested_section_id'] ?? $prod['storeNestedSectionId'] ?? 0,
@@ -239,6 +241,7 @@ class SyncController extends Controller
                         ];
 
                         $updateColumns = [
+                            'store_branch_id',
                             'name',
                             'description',
                             'store_nested_section_id',
