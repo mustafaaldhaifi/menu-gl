@@ -47,10 +47,9 @@ class SyncController extends Controller
             ], 400);
         }
     }
-
     function addOrUpdateOne(Request $request)
     {
-        // جلب المصفوفة مباشرة من كائن الـ Request دون خوف من تفريغ البيانات
+        // جلب المصفوفة بالطريقة الصحيحة للارافل مباشرة بناءً على الـ Log
         $store_nested_sections = $request->input('payload.store_nested_sections', []);
 
         $report = [
@@ -58,9 +57,12 @@ class SyncController extends Controller
             'errors' => []
         ];
 
-        // التحقق من أن المصفوفة ليست فارغة
         if (empty($store_nested_sections)) {
-            return response()->json(['status' => 'error', 'message' => 'No sections found in payload'], 400);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No sections found in payload',
+                'debug_keys' => array_keys($request->all())
+            ], 400);
         }
 
         try {
@@ -68,34 +70,42 @@ class SyncController extends Controller
 
                 foreach ($store_nested_sections as $sectionWrapper) {
                     try {
-                        // 🔹 معالجة التفاف كائن stdClass (مهم جداً بناءً على الـ JSON المرسل من سيرفرك)
-                        $cat = isset($sectionWrapper['stdClass']) ? $sectionWrapper['stdClass'] : $sectionWrapper;
+                        // 🔹 حل لغز الـ stdClass النهائي:
+                        // بما أن الطرف المرسل يضع البيانات داخل كائن مفتاحه "stdClass"،
+                        // نقوم بالتقاطه مباشرة، وإذا لم يوجد نأخذ الـ wrapper نفسه.
+                        $cat = $sectionWrapper['stdClass'] ?? $sectionWrapper;
 
-                        // 1. الحقل الإلزامي
+                        // التحقق من أن الـ ID متوفر لمنع ضرب الكود
+                        if (!isset($cat['id'])) {
+                            $report['errors'][] = "Missing ID in element row.";
+                            continue;
+                        }
+
+                        // 1. الحقل الإلزامي الفريد في الـ PostgreSQL / MySQL
                         $insertData = [
                             'id' => $cat['id'],
                         ];
 
                         $updateColumns = [];
 
-                        // قائمة بجميع الحقول المتوقعة بنمط snake_case المطابق للـ داتابيز والـ JSON
+                        // 2. الحقول المطابقة تماماً لملف الـ Log المرسل بنمط snake_case
                         $optionalFields = [
                             'name',
                             'cover',
                             'order_no',
                             'order_at',
                             'store_branch_id',
+                            'store_section_id',
                             'is_hidden',
                             'enabled',
-                            'created_at',
-                            'stores_section_id'
+                            'created_at'
                         ];
 
-                        // 2. فحص الحقول ديناميكياً
+                        // فحص وبناء المصفوفة ديناميكياً بناءً على ما أُرسل فعلياً
                         foreach ($optionalFields as $field) {
                             if (isset($cat[$field])) {
 
-                                // إذا كان الحقل هو الـ cover، نقوم بتحميل الصورة أولاً عبر دالة الـ Storage
+                                // معالجة الصور بشكل احترافي
                                 if ($field === 'cover') {
                                     $prefix = "cat_{$cat['id']}_";
                                     $localImage = $this->handleLaravelImageDownload($cat['cover'], 'nested_sections', $prefix);
@@ -105,24 +115,24 @@ class SyncController extends Controller
                                     $insertData[$field] = $cat[$field];
                                 }
 
-                                // إضافة الحقل للتحديث بشرط ألا يكون تاريخ الإنشاء لضمان استقرار الداتابيز
+                                // نحدث كل الحقول ما عدا تاريخ الإنشاء الأصلي لعدم تزوير المزامنة القديمة
                                 if ($field !== 'created_at') {
                                     $updateColumns[] = $field;
                                 }
                             }
                         }
 
-                        // دائماً نحدث وقت التعديل محلياً
+                        // تحديث وقت التعديل محلياً لتوثيق وقت الاستلام
                         $insertData['updated_at'] = now();
                         $updateColumns[] = 'updated_at';
 
-                        // 3. تنفيذ الـ upsert الديناميكي بأمان داخل الـ Database
+                        // 3. ضربة الـ upsert القاضية والآمنة
                         NestedSection::upsert([$insertData], ['id'], $updateColumns);
 
                         $report['categories_synced']++;
 
                     } catch (Exception $e) {
-                        $report['errors'][] = "Category ID " . ($sectionWrapper['stdClass']['id'] ?? 'Unknown') . " error: " . $e->getMessage();
+                        $report['errors'][] = "Error inside section execution: " . $e->getMessage();
                     }
                 }
             });
@@ -130,7 +140,7 @@ class SyncController extends Controller
             return response()->json(['status' => 'success', 'report' => $report]);
 
         } catch (Exception $e) {
-            Log::error("فشلت عملية المزامنة addOrUpdateOne: " . $e->getMessage());
+            Log::error("فشلت عملية المزامنة addOrUpdateOne بالكامل: " . $e->getMessage());
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
