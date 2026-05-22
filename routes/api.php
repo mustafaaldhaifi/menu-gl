@@ -22,5 +22,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('/api_receiver', [SyncController::class, 'index']);
+Route::post('/api_receiver', [SyncController::class, 'index']);
 
